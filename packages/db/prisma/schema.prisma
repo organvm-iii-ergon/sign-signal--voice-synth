@@ -1,0 +1,112 @@
+// Prisma Schema for Sign Signal — Speech Score Engine Layer 1
+// Based on data-model.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Scene {
+  id          String    @id @default(uuid())
+  title       String
+  rawText     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  speakers    Speaker[]
+  phrases     PhraseEvent[]
+  versions    Version[]
+}
+
+model Speaker {
+  id            String    @id @default(uuid())
+  sceneId       String
+  displayName   String
+  voiceProfileId String?  @unique
+  sortOrder     Int       @default(0)
+
+  scene         Scene     @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  voiceProfile  VoiceProfile? @relation(fields: [voiceProfileId], references: [id])
+  phrases       PhraseEvent[]
+
+  @@index([sceneId])
+}
+
+model PhraseEvent {
+  id                String    @id @default(uuid())
+  sceneId           String
+  speakerId         String?
+  textContent       String
+  phraseIndex       Int
+  
+  repeatCount       Int       @default(1)
+  staggerMs         Int       @default(0)
+  durationMode      String    @default("AUTO")
+  fixedDurationMs   Int?
+  startTrigger      String    @default("IMMEDIATE")
+  loopMode          String    @default("FIXED")
+  estimatedDurationMs Int     @default(0)
+
+  scene             Scene     @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  speaker           Speaker?  @relation(fields: [speakerId], references: [id])
+
+  @@unique([sceneId, phraseIndex])
+  @@index([sceneId])
+  @@index([speakerId])
+}
+
+model VoiceProfile {
+  id              String    @id @default(uuid())
+  provider        String
+  modelKey        String
+  displayName     String
+  speechRate      Float     @default(1.0)
+  pitchOffset     Float     @default(0.0)
+  cloneAudioUri   String?
+  apiKey          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  speaker         Speaker?
+}
+
+model Version {
+  id                String    @id @default(uuid())
+  sceneId           String
+  versionLabel      String
+  rawTextSnapshot   String
+  phrasesSnapshot   Json
+  createdAt         DateTime  @default(now())
+
+  scene             Scene     @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@index([sceneId])
+}
+
+// Enums for type safety (used in application code)
+enum DurationMode {
+  AUTO
+  FIXED_MS
+}
+
+enum StartTrigger {
+  IMMEDIATE
+  AFTER_PREVIOUS
+  ON_CONDUCTOR_MARK
+}
+
+enum LoopMode {
+  FIXED
+  ESCALATING
+}
+
+enum VoiceProvider {
+  ELEVENLABS
+  COQUI
+  VALLE
+  CUSTOM_CLONE
+}

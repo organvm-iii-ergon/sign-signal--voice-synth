@@ -1,0 +1,48 @@
+name: sign-signal--voice-synth
+description: >
+  Speech Score Engine — Layer 1: Dialogue Looping Tracker Sequence.
+  A sequencer interface for writing dialogue, segmenting phrase-events,
+  assigning voices, and hearing timed loop-sequence playback.
+type: application
+status: LOCAL
+organ: Commerce
+Tier: standard
+flagship: false
+created_at: 2026-03-30
+updated_at: 2026-03-30
+owners:
+  - 4444j99
+tags:
+  - speech-score
+  - dialogue
+  - tts
+  - voice-synthesis
+  - theatrical
+  - performance
+  - sequencing
+  - layer-1
+
+config:
+  multi_repo: true
+  monorepo: true
+  packages:
+    - apps/web
+    - apps/api
+    - packages/db
+    - packages/shared
+
+tech_stack:
+  frontend:
+    - Next.js 14
+    - TypeScript
+    - Tailwind CSS
+  backend:
+    - FastAPI
+    - Python 3.11
+  database:
+    - PostgreSQL
+    - Redis
+  tts_providers:
+    - ElevenLabs
+    - Coqui TTS
+    - VALL-E
