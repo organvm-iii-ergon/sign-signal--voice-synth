@@ -7,9 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:voice-bridge\"",
     "dev:web": "npm run dev -w @sign-signal/web",
     "dev:api": "npm run dev -w @sign-signal/api",
+    "dev:voice-bridge": "npm run dev -w @sign-signal/voice-bridge",
     "build": "npm run build -w @sign-signal/web && npm run build -w @sign-signal/api",
     "test": "npm run test -w @sign-signal/web"
   },
