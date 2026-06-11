@@ -8,7 +8,8 @@
     "start": "uvicorn main:app --host 0.0.0.0 --port 8000"
   },
   "dependencies": {
-    "@sign-signal/db": "*"
+    "@sign-signal/db": "*",
+    "redis": "^5.0.1"
   },
   "devDependencies": {
 
