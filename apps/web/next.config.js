@@ -1,7 +1,6 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   transpilePackages: ["@sign-signal/shared", "@sign-signal/db"],
 };
 
-export default nextConfig;
+module.exports = nextConfig;
