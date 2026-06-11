@@ -3,24 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "uvicorn main:app --reload",
+    "dev": "uvicorn src.main:app --reload",
     "build": "python -m compile_all",
     "start": "uvicorn main:app --host 0.0.0.0 --port 8000"
   },
   "dependencies": {
-    "@sign-signal/db": "*",
-    "fastapi": "^0.109.0",
-    "uvicorn": "^0.27.0",
-    "pydantic": "^2.5.3",
-    "elevenlabs": "^1.40.0",
-    "coqui-tts": "^0.0.1",
-    "httpx": "^3.0.1",
-    "redis": "^6.0.0",
-    "python-multipart": "^0.0.6"
+    "@sign-signal/db": "*"
   },
   "devDependencies": {
-    "python": "^3.11.0",
-    "pytest": "^7.4.4",
-    "pytest-asyncio": "^0.23.3"
+
   }
 }
