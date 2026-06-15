@@ -14,8 +14,8 @@
     "pydantic": "^2.5.3",
     "elevenlabs": "^1.40.0",
     "coqui-tts": "^0.0.1",
-    "httpx": "^0.26.0",
-    "redis": "^5.0.1",
+    "httpx": "^3.0.1",
+    "redis": "^6.0.0",
     "python-multipart": "^0.0.6"
   },
   "devDependencies": {
