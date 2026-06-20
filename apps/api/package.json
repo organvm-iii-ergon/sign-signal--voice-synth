@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@sign-signal/db": "*",
-    "redis": "^5.0.1"
+    "redis": "^6.0.0"
   },
   "devDependencies": {}
 }
