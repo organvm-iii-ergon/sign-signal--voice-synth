@@ -12,7 +12,7 @@
     "dev:api": "npm run dev -w @sign-signal/api",
     "dev:voice-bridge": "npm run dev -w @sign-signal/voice-bridge",
     "build": "npm run build -w @sign-signal/web && npm run build -w @sign-signal/api",
-    "test": "npm run test -w @sign-signal/web"
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "concurrently": "^10.0.3",

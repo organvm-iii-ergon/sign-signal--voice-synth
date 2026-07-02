@@ -1,8 +1,14 @@
 const http = require('http');
-const { WebSocketServer } = require('ws');
-const { spawn } = require('child_process');
-const path = require('path');
+const { spawn: spawnProcess } = require('child_process');
 const os = require('os');
+
+const {
+  addRegisteredCommands,
+  buildWhisperArgs,
+  loadConfig,
+  normalizeCommand,
+  parseWhisperRecognitions
+} = require('./bridge-core');
 
 const log = (message, ...args) => {
   const timestamp = new Date().toISOString();
@@ -14,184 +20,183 @@ const error = (message, ...args) => {
   console.error(`[${timestamp}] ${message}`, ...args);
 };
 
+const createVoiceBridge = (options = {}) => {
+  const config = options.config || loadConfig(options.env || process.env, __dirname);
+  const logger = options.log || log;
+  const errorLogger = options.error || error;
+  const spawn = options.spawn || spawnProcess;
+  const WebSocketServer = options.WebSocketServer || require('ws').WebSocketServer;
+  const restartDelayMs = options.restartDelayMs ?? 1000;
+  const registeredCommands = options.registeredCommands || new Set();
 
-// Load configuration from environment variables
-const PORT = process.env.PORT || 9999;
-const MODEL_PATH = process.env.WHISPER_MODEL_PATH 
-  ? path.resolve(__dirname, process.env.WHISPER_MODEL_PATH)
-  : path.join(__dirname, 'models', 'ggml-base.en.bin');
-const THREADS = process.env.WHISPER_THREADS || '4';
-const STEP_MS = process.env.WHISPER_STEP_MS || '500';
-const LENGTH_MS = process.env.WHISPER_LENGTH_MS || '3000';
-const VAD_THOLD = process.env.WHISPER_VAD_THOLD || '0.6';
+  let whisperProcess = null;
+  let shuttingDown = false;
+  let wss;
 
-const normalizeCommand = (phrase) => {
-  const cleanPhrase = phrase.toLowerCase().replace(/[.,!?]/g, '').trim();
-  for (let cmd of registeredCommands) {
-    if (cmd.toLowerCase().replace(/[.,!?]/g, '').trim() === cleanPhrase) {
-      return cmd;
-    }
-  }
-  return phrase;
-};
+  const broadcastCommand = (command) => {
+    const message = JSON.stringify({
+      name: 'commandRecognized',
+      command
+    });
 
-const server = http.createServer((req, res) => {
-  log(`[Voice Bridge] ${req.method} ${req.url}`);
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', component: 'voice-bridge' }));
-  } else if (req.url.startsWith('/test')) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const rawCommand = url.searchParams.get('command');
-    if (rawCommand) {
-      const command = normalizeCommand(rawCommand);
-      log(`[Voice Bridge] Simulating command: "${command}" (input: "${rawCommand}")`);
-      wss.clients.forEach((client) => {
-        if (client.readyState === 1) {
-          client.send(JSON.stringify({
-            name: 'commandRecognized',
-            command: command
-          }));
-        }
-      });
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'simulated', command, input: rawCommand }));
-    } else {
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: 'Missing command parameter' }));
-    }
-  } else {
-    res.writeHead(404);
-    res.end();
-  }
-});
-
-const wss = new WebSocketServer({ server });
-
-server.listen(PORT, () => {
-  log('[Voice Bridge] System Audit:');
-  log(`  Time: ${new Date().toString()}`);
-  log(`  Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
-  log(`  Platform: ${os.platform()} (${os.release()})`);
-  log(`[Voice Bridge] Listening on http://localhost:${PORT}`);
-  log(`[Voice Bridge] Health check: http://localhost:${PORT}/health`);
-  log(`[Voice Bridge] Using model: ${MODEL_PATH}`);
-});
-
-let whisperProcess = null;
-let registeredCommands = new Set();
-
-const startWhisper = () => {
-  if (whisperProcess) return;
-  
-  log('[Voice Bridge] Starting global whisper-stream...');
-  
-  whisperProcess = spawn('whisper-stream', [
-    '-m', MODEL_PATH,
-    '-t', THREADS,
-    '--step', STEP_MS,
-    '--length', LENGTH_MS,
-    '-vth', VAD_THOLD
-  ]);
-
-  whisperProcess.stdout.on('data', (data) => {
-    const text = data.toString().trim();
-    if (!text) return;
-
-    const lines = text.split('\n');
-    for (let line of lines) {
-      // Strip ANSI escape codes and timestamps
-      let rawPhrase = line.replace(/\x1B\[[0-9;]*[JKmsu]/g, '').replace(/^\[.*?\]/, '').trim();
-      if (!rawPhrase) continue;
-
-      const phrase = rawPhrase.toLowerCase();
-      
-      // Hallucination/Music filter
-      if (phrase.startsWith('[') || phrase.endsWith(']') || 
-          phrase.startsWith('(') || phrase.endsWith(')')) continue;
-      
-      const noise = [
-        'thank you.', 'thank you for watching.', 'you', 'please subscribe', 
-        'english subtitles', 'subscribe', 'watching', 'thanks for watching'
-      ];
-        if (noise.some(n => phrase.includes(n))) continue;
-        if (phrase.length < 2) continue;
-
-        // Command normalization
-        const finalCommand = normalizeCommand(rawPhrase);
-
-        log(`[Voice Bridge] Recognized: "${finalCommand}" (raw: "${rawPhrase}")`);
-        
-        const message = JSON.stringify({
-          name: 'commandRecognized',
-          command: finalCommand
-        });
-
-        wss.clients.forEach((client) => {
-          if (client.readyState === 1) {
-            client.send(message);
-          }
-        });
-    }
-  });
-
-  whisperProcess.stderr.on('data', (data) => {
-    const msg = data.toString();
-    if (msg.includes('error')) {
-      error(`[Whisper Error] ${msg.trim()}`);
-    }
-  });
-
-  whisperProcess.on('close', (code) => {
-    log(`[Voice Bridge] Whisper process exited with code ${code}`);
-    whisperProcess = null;
-    // Auto-restart if not shutting down
-    if (!shuttingDown) {
-      setTimeout(startWhisper, 1000);
-    }
-  });
-};
-
-let shuttingDown = false;
-
-wss.on('connection', (ws) => {
-  log('[Voice Bridge] Client connected');
-  
-  // Ensure whisper is running
-  startWhisper();
-
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      if (data.name === 'activate') {
-        log('[Voice Bridge] Activation requested');
-      } else if (data.name === 'setCommands') {
-        if (data.commands) {
-          data.commands.forEach(cmd => registeredCommands.add(cmd.command));
-          log(`[Voice Bridge] Commands updated. Total registered: ${registeredCommands.size}`);
-        }
+    wss.clients.forEach((client) => {
+      if (client.readyState === 1) {
+        client.send(message);
       }
-    } catch (err) {
-      error('[Voice Bridge] Error parsing message:', err);
+    });
+  };
+
+  const server = http.createServer((req, res) => {
+    logger(`[Voice Bridge] ${req.method} ${req.url}`);
+    if (req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', component: 'voice-bridge' }));
+    } else if (req.url.startsWith('/test')) {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const rawCommand = url.searchParams.get('command');
+      if (rawCommand) {
+        const command = normalizeCommand(rawCommand, registeredCommands);
+        logger(`[Voice Bridge] Simulating command: "${command}" (input: "${rawCommand}")`);
+        broadcastCommand(command);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'simulated', command, input: rawCommand }));
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing command parameter' }));
+      }
+    } else {
+      res.writeHead(404);
+      res.end();
     }
   });
 
-  ws.on('close', () => {
-    log('[Voice Bridge] Client disconnected');
+  wss = new WebSocketServer({ server });
+
+  const startWhisper = () => {
+    if (whisperProcess) return;
+
+    logger('[Voice Bridge] Starting global whisper-stream...');
+
+    whisperProcess = spawn('whisper-stream', buildWhisperArgs(config));
+
+    whisperProcess.stdout.on('data', (data) => {
+      const recognitions = parseWhisperRecognitions(data, registeredCommands);
+
+      recognitions.forEach(({ rawPhrase, command }) => {
+        logger(`[Voice Bridge] Recognized: "${command}" (raw: "${rawPhrase}")`);
+        broadcastCommand(command);
+      });
+    });
+
+    whisperProcess.stderr.on('data', (data) => {
+      const msg = data.toString();
+      if (msg.includes('error')) {
+        errorLogger(`[Whisper Error] ${msg.trim()}`);
+      }
+    });
+
+    whisperProcess.on('close', (code) => {
+      logger(`[Voice Bridge] Whisper process exited with code ${code}`);
+      whisperProcess = null;
+      if (!shuttingDown) {
+        setTimeout(startWhisper, restartDelayMs);
+      }
+    });
+  };
+
+  wss.on('connection', (ws) => {
+    logger('[Voice Bridge] Client connected');
+
+    startWhisper();
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data.name === 'activate') {
+          logger('[Voice Bridge] Activation requested');
+        } else if (data.name === 'setCommands') {
+          addRegisteredCommands(registeredCommands, data.commands);
+          logger(`[Voice Bridge] Commands updated. Total registered: ${registeredCommands.size}`);
+        }
+      } catch (err) {
+        errorLogger('[Voice Bridge] Error parsing message:', err);
+      }
+    });
+
+    ws.on('close', () => {
+      logger('[Voice Bridge] Client disconnected');
+    });
+
+    ws.on('error', (err) => {
+      errorLogger('[Voice Bridge] WebSocket error:', err);
+    });
   });
 
-  ws.on('error', (err) => {
-    error('[Voice Bridge] WebSocket error:', err);
-  });
-});
+  const logSystemAudit = () => {
+    logger('[Voice Bridge] System Audit:');
+    logger(`  Time: ${new Date().toString()}`);
+    logger(`  Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+    logger(`  Platform: ${os.platform()} (${os.release()})`);
+    logger(`[Voice Bridge] Listening on http://localhost:${config.port}`);
+    logger(`[Voice Bridge] Health check: http://localhost:${config.port}/health`);
+    logger(`[Voice Bridge] Using model: ${config.modelPath}`);
+  };
 
-process.on('SIGINT', () => {
-  log('[Voice Bridge] Shutting down...');
-  shuttingDown = true;
-  if (whisperProcess) {
-    whisperProcess.kill();
-  }
-  wss.close(() => {
-    process.exit(0);
+  const listen = (port = config.port, callback = logSystemAudit) => {
+    server.listen(port, callback);
+  };
+
+  const close = (callback) => {
+    shuttingDown = true;
+    if (whisperProcess) {
+      whisperProcess.kill();
+    }
+
+    const finish = () => {
+      if (server.listening) {
+        server.close(callback);
+      } else if (callback) {
+        callback();
+      }
+    };
+
+    wss.close(finish);
+  };
+
+  return {
+    close,
+    config,
+    listen,
+    registeredCommands,
+    server,
+    startWhisper,
+    wss
+  };
+};
+
+const startBridge = (options = {}) => {
+  const bridge = createVoiceBridge(options);
+  bridge.listen();
+  return bridge;
+};
+
+if (require.main === module) {
+  const bridge = startBridge();
+
+  process.on('SIGINT', () => {
+    log('[Voice Bridge] Shutting down...');
+    bridge.close(() => {
+      process.exit(0);
+    });
   });
-});
+}
+
+module.exports = {
+  createVoiceBridge,
+  startBridge,
+  addRegisteredCommands,
+  buildWhisperArgs,
+  loadConfig,
+  normalizeCommand,
+  parseWhisperRecognitions
+};
