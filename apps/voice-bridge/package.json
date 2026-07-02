@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node --env-file=.env bridge.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "dependencies": {
     "ws": "^8.16.0",
