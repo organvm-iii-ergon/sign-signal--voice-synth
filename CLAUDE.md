@@ -181,3 +181,112 @@ Nature demands a documentation counterpart. This formation maintains its narrati
 *Compliance: Formation is currently void.*
 
 <!-- ORGANVM:AUTO:END -->
+
+## Project Context & Overview
+
+**Sign Signal — Voice Synth** is a **Speech-Score Composition System** (`$SPEECH_SCORE_ENGINE`). It treats language as a dual-aspect object: **semantic content** and **timed performance**. The system converts language into a scored, repeatable, transformable performance object across page, audio, rehearsal, and live execution.
+
+---
+
+## Tech Stack Summary
+
+- **Architecture:** Monorepo using npm workspaces
+- **Frontend (`apps/web`):** Next.js 14, React 19, TypeScript, Tailwind CSS
+- **Backend API (`apps/api`):** FastAPI, Python 3.11, Uvicorn
+- **Voice Bridge (`apps/voice-bridge`):** Node.js WebSocket Bridge, `ws`, `node-record-lpcm16`
+- **Database (`packages/db`):** PostgreSQL, Prisma ORM
+- **Cache/Queue:** Redis
+- **TTS Provider Integrations:** ElevenLabs, Coqui TTS, VALL-E
+
+---
+
+## Development & Build Commands
+
+Commands are run from the root directory:
+
+- **Start All Services Concurrently:**
+  ```bash
+  npm run dev
+  ```
+  *(Starts `@sign-signal/web`, `@sign-signal/api`, and `@sign-signal/voice-bridge` concurrently)*
+
+- **Start Individual Workspaces:**
+  ```bash
+  npm run dev:web           # Next.js web application
+  npm run dev:api           # FastAPI backend server
+  npm run dev:voice-bridge  # Node.js WebSocket voice bridge
+  ```
+
+- **Build Services:**
+  ```bash
+  npm run build             # Builds web and api workspaces
+  ```
+
+- **Run Workspace Tests:**
+  ```bash
+  npm run test              # Executes tests across workspaces (--workspaces --if-present)
+  ```
+
+- **Database Management (`packages/db`):**
+  ```bash
+  npm run generate -w @sign-signal/db   # Generate Prisma client
+  npm run migrate -w @sign-signal/db    # Run Prisma migrations
+  npm run push -w @sign-signal/db       # Push schema directly to database
+  ```
+
+---
+
+## Monorepo Navigation Protocol
+
+```
+sign-signal--voice-synth/
+├── apps/
+│   ├── api/          # FastAPI backend service (Python 3.11)
+│   ├── web/          # Next.js 14 web client (TypeScript, React 19, Tailwind CSS)
+│   └── voice-bridge/ # Node.js WebSocket service for realtime voice synthesis & local audio streams
+├── packages/
+│   ├── db/           # Shared database ORM (Prisma schema & client)
+│   └── shared/       # Shared TypeScript types, utilities, and contracts
+└── specs/
+    └── layer-1-dialogue-loop-tracker/ # Layer 1 feature specs, data models, and API contracts
+```
+
+### Monorepo Naming & Scope Rules:
+- **Title Case:** External category names (e.g., `Speech-Score Composition System`, `Dramaturgical-Audio Workbench`)
+- **`$UPPER_SNAKE_CASE`:** Canonical internal ontological entities (e.g., `$SPEECH_SCORE_ENGINE`, `$PHRASE_EVENT`)
+- **`lowercase_snake_case`:** Database tables and column identifiers without `$` prefix
+- **`PascalCase`:** TypeScript types, interfaces, React components
+- **`camelCase`:** TypeScript object fields, parameters
+- **`kebab-case`:** Directories and file names
+
+---
+
+## Canonical Terminology
+
+The ontology enforces that language is both meaning-bearing and temporally operative.
+
+| Entity / Concept | Term | Description |
+| --- | --- | --- |
+| **Internal Engine** | `$SPEECH_SCORE_ENGINE` | Canonical compositional engine for authoring, analyzing, rehearsing, rendering, and performing speech works. |
+| **Primary Unit** | `$PHRASE_EVENT` | Bounded utterance/fragment with semantic content, speaker assignment, temporal position, duration, and relational status. |
+| **Voice Carrier** | `$VOICE_CHANNEL` | Speaking carrier independent from character identity (a character or chorus maps to channels). |
+| **Organizing Logic** | `$TEMPORAL_RELATION` | Primary organizing principle (cue order, overlap, delay, recurrence, silence, entry logic). |
+| **Temporal Kernel** | `$TIMING_SUBSTRATE` | Handles clock time, beat time, relative cue time, and elastic time. |
+| **Score Output** | `$NOTATION_RENDERER` | Service producing readable script view, rhythmic score, spatial matrix, and performer parts. |
+| **Rehearsal Bridge** | `$REHEARSAL_KERNEL` | Translates composition objects into cue sheets, click guides, count-ins, and stems. |
+| **Live Layer** | `$LIVE_EXECUTION_LAYER` | Real-time coordination during performance (conductor view, countdowns, tempo maps). |
+| **Diagnostics** | `$ANALYSIS_ENGINE` | Dramaturgical diagnostic engine for pacing, speaker differentiation, rhythm, and interruption logic. |
+
+*Note: Never classify the system as a commodity "TTS tool", "script reader", "voice generator", or "audio toy".*
+
+---
+
+## Key Specification & Context Links
+
+- **Layer 1 Feature Spec:** `specs/layer-1-dialogue-loop-tracker/spec.md`
+- **Data Model:** `specs/layer-1-dialogue-loop-tracker/data-model.md`
+- **API Contracts:** `specs/layer-1-dialogue-loop-tracker/contracts/api.md`
+- **Implementation Plan:** `specs/layer-1-dialogue-loop-tracker/plan.md`
+- **Tasks & Roadmap:** `specs/layer-1-dialogue-loop-tracker/tasks.md`
+- **Terminology Charter & Gap Analysis:** `ChatGPT-Gap Analysis and Merging.md`
+- **Proof of Concept & Prototype Design:** `ChatGPT-Prototype & Proof of Concept.md`
