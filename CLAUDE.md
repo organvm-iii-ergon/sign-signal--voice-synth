@@ -1,3 +1,48 @@
+# Sign Signal — project guide
+
+## Purpose and implemented boundary
+
+The intended product is a **Speech-Score Composition System** (`$SPEECH_SCORE_ENGINE`): language treated as both semantic content and timed performance. The Layer 1 specifications describe a dialogue-looping tracker, phrase events, voice assignments, and sequenced playback. A specification or a declared script is not evidence that the complete product is implemented or deployed.
+
+Current source is a monorepo with npm workspaces (`apps/*`, `packages/*`). `apps/web/package.json` declares **Next.js 16.3.1**, React 19, TypeScript, and Tailwind. `apps/api/src/main.py` is a FastAPI scaffold exposing `/` and `/health`; those endpoints do not establish implemented scene, phrase, or sequence APIs. `apps/voice-bridge/` contains a Node WebSocket/audio bridge and a test file. `packages/db/` contains the Prisma database package. Redis and the proposed ElevenLabs, Coqui TTS, and VALL-E integrations must be verified against implementation and configuration before being described as operational.
+
+## Commands and verification
+
+Run declared root scripts from the repository root:
+
+```bash
+npm run dev               # Declared concurrent web/API/voice-bridge development entry
+npm run dev:web
+npm run dev:api
+npm run dev:voice-bridge
+npm run build             # Declared web then API workspace build
+npm run test              # npm run test --workspaces --if-present
+```
+
+The root test script permits workspaces without a test command. Its exit code alone does not prove that every workspace was tested. Inspect each workspace manifest and report the actual test runner, executed cases, failures, and skips. The voice-bridge package declares `node --test`; use `npm run test -w @sign-signal/voice-bridge` for its declared suite. Do not equate command availability with a successful build, device test, or live integration.
+
+The voice-bridge development script uses `node --env-file=.env bridge.js`. Check its environment requirements before starting it; development commands can access audio devices or external services and are not documentation-validation commands. Do not expose real secrets or commit environment files.
+
+`packages/db/package.json` declares `generate`, `migrate`, and `push` under `@sign-signal/db`. Inspect the Prisma schema and target before use. Migration and schema-push commands mutate a database and require an explicitly approved target; they are not smoke tests.
+
+## Navigation and canonical language
+
+Start with the root `package.json`, then the manifest and source in the workspace being changed. Keep web changes in `apps/web`, API changes in `apps/api`, bridge changes in `apps/voice-bridge`, database changes in `packages/db`, and shared contracts in `packages/shared`. Read the Layer 1 contract before changing a cross-workspace interface. Read `.conductor/active-handoff.md` first when present; preserve active path ownership.
+
+Preserve the design vocabulary from `ChatGPT-Gap Analysis and Merging.md`: `$PHRASE_EVENT` is the bounded utterance/performance unit; `$VOICE_CHANNEL` identifies its speaking carrier; `$TEMPORAL_RELATION` describes timing relationships. `$TIMING_SUBSTRATE`, `$NOTATION_RENDERER`, `$REHEARSAL_KERNEL`, `$LIVE_EXECUTION_LAYER`, and `$ANALYSIS_ENGINE` name intended architectural roles, not a claim that all corresponding services exist. Do not reduce the product's category to a generic TTS tool or silently rename canonical entities. Consult the charter for naming conventions before introducing identifiers.
+
+## Source specifications
+
+- `specs/layer-1-dialogue-loop-tracker/spec.md`: intended Layer 1 behavior.
+- `specs/layer-1-dialogue-loop-tracker/data-model.md`: proposed data model.
+- `specs/layer-1-dialogue-loop-tracker/contracts/api.md`: API contract.
+- `specs/layer-1-dialogue-loop-tracker/plan.md`: implementation plan.
+- `specs/layer-1-dialogue-loop-tracker/tasks.md`: implementation task inventory; verify current completion in source.
+- `ChatGPT-Gap Analysis and Merging.md`: terminology charter and design decisions.
+- `ChatGPT-Prototype & Proof of Concept.md`: prototype design provenance.
+
+The generated system block below is preserved as historical generated context. Its April 2026 metrics and model guidance are not a fresh measurement of this repository or proof of present capabilities. Update it only through its owning generation process, not by editing it during a project-guide repair.
+
 <!-- ORGANVM:AUTO:START -->
 ## System Context (auto-generated — do not edit)
 
@@ -58,9 +103,9 @@ Library: `meta-organvm/praxis-perpetua/library/`
 | system | any | research-standards-bibliography | APPENDIX: Research Standards Bibliography |
 | system | any | phase-closing-and-forward-plan | METADOC: Phase-Closing Commemoration & Forward Attack Plan |
 | system | any | research-standards | METADOC: Architectural Typology & Research Standards |
-| system | any | sop-ecosystem | METADOC: SOP Ecosystem — Taxonomy, Inventory & Coverage |
+| system | any | sop-ecosystem | SOP: SOP Ecosystem — Taxonomy, Inventory & Coverage |
 | system | foundation | agent-seeding-and-workforce-planning | agent-seeding-and-workforce-planning |
-| system | foundation | architecture-decision-records | architecture-decision-records |
+| system | foundation | architecture-decision-records | SOP: Architectural Decision Records |
 | system | any | autonomous-content-syndication | SOP: Autonomous Content Syndication (The Broadcast Protocol) |
 | system | any | autopoietic-systems-diagnostics | SOP: Autopoietic Systems Diagnostics (The Mirror of Eternity) |
 | system | any | background-task-resilience | background-task-resilience |
@@ -108,8 +153,8 @@ Library: `meta-organvm/praxis-perpetua/library/`
 | system | any | typological-hermeneutic-analysis | SOP: Typological & Hermeneutic Analysis (The Archaeology) |
 | unknown | any | SOP-SS-ATM-001_001-atomic-decomposition | SOP-SS-ATM-001_001: Atomic Decomposition & Coverage Proof |
 | unknown | any | SOP-SS-CLT-001_001-ontology_client_decisions | SOP-SS-CLT-001_001-ontology_client_decisions |
-| unknown | any | SOP-SS-CNT-001_001-content-extraction-and-node-injection | SOP-SS-CNT-001_001: Content Extraction & Node Injection |
-| unknown | any | SOP-SS-ISS-001-001-ontology-issue-specification | SOP-SS-ISS-001-001-ontology-issue-specification |
+| unknown | any | SOP-SS-CNT-001_001-content-extraction-and-node-injection | SOP-SS-CNT-001_001-content-extraction-and-node-injection |
+| unknown | any | SOP-SS-ISS-001-001-ontology-issue-specification | SOP-SS-ISS-001-001-ontology_issue_specification |
 | unknown | any | SOP-SS-PRC-001_001-ontology_meta_process | SOP-SS-PRC-001-001-ontology-meta-process |
 | unknown | any | SOP-SS-QAB-001_001-project-board-qa | SOP-SS-QAB-001_001-project-board-qa |
 | unknown | any | SOP-SS-TRK-001_001-ontology_issue_tracking | SOP-SS-TRK-001_001-ontology_issue_tracking |
@@ -181,112 +226,3 @@ Nature demands a documentation counterpart. This formation maintains its narrati
 *Compliance: Formation is currently void.*
 
 <!-- ORGANVM:AUTO:END -->
-
-## Project Context & Overview
-
-**Sign Signal — Voice Synth** is a **Speech-Score Composition System** (`$SPEECH_SCORE_ENGINE`). It treats language as a dual-aspect object: **semantic content** and **timed performance**. The system converts language into a scored, repeatable, transformable performance object across page, audio, rehearsal, and live execution.
-
----
-
-## Tech Stack Summary
-
-- **Architecture:** Monorepo using npm workspaces
-- **Frontend (`apps/web`):** Next.js 14, React 19, TypeScript, Tailwind CSS
-- **Backend API (`apps/api`):** FastAPI, Python 3.11, Uvicorn
-- **Voice Bridge (`apps/voice-bridge`):** Node.js WebSocket Bridge, `ws`, `node-record-lpcm16`
-- **Database (`packages/db`):** PostgreSQL, Prisma ORM
-- **Cache/Queue:** Redis
-- **TTS Provider Integrations:** ElevenLabs, Coqui TTS, VALL-E
-
----
-
-## Development & Build Commands
-
-Commands are run from the root directory:
-
-- **Start All Services Concurrently:**
-  ```bash
-  npm run dev
-  ```
-  *(Starts `@sign-signal/web`, `@sign-signal/api`, and `@sign-signal/voice-bridge` concurrently)*
-
-- **Start Individual Workspaces:**
-  ```bash
-  npm run dev:web           # Next.js web application
-  npm run dev:api           # FastAPI backend server
-  npm run dev:voice-bridge  # Node.js WebSocket voice bridge
-  ```
-
-- **Build Services:**
-  ```bash
-  npm run build             # Builds web and api workspaces
-  ```
-
-- **Run Workspace Tests:**
-  ```bash
-  npm run test              # Executes tests across workspaces (--workspaces --if-present)
-  ```
-
-- **Database Management (`packages/db`):**
-  ```bash
-  npm run generate -w @sign-signal/db   # Generate Prisma client
-  npm run migrate -w @sign-signal/db    # Run Prisma migrations
-  npm run push -w @sign-signal/db       # Push schema directly to database
-  ```
-
----
-
-## Monorepo Navigation Protocol
-
-```
-sign-signal--voice-synth/
-├── apps/
-│   ├── api/          # FastAPI backend service (Python 3.11)
-│   ├── web/          # Next.js 14 web client (TypeScript, React 19, Tailwind CSS)
-│   └── voice-bridge/ # Node.js WebSocket service for realtime voice synthesis & local audio streams
-├── packages/
-│   ├── db/           # Shared database ORM (Prisma schema & client)
-│   └── shared/       # Shared TypeScript types, utilities, and contracts
-└── specs/
-    └── layer-1-dialogue-loop-tracker/ # Layer 1 feature specs, data models, and API contracts
-```
-
-### Monorepo Naming & Scope Rules:
-- **Title Case:** External category names (e.g., `Speech-Score Composition System`, `Dramaturgical-Audio Workbench`)
-- **`$UPPER_SNAKE_CASE`:** Canonical internal ontological entities (e.g., `$SPEECH_SCORE_ENGINE`, `$PHRASE_EVENT`)
-- **`lowercase_snake_case`:** Database tables and column identifiers without `$` prefix
-- **`PascalCase`:** TypeScript types, interfaces, React components
-- **`camelCase`:** TypeScript object fields, parameters
-- **`kebab-case`:** Directories and file names
-
----
-
-## Canonical Terminology
-
-The ontology enforces that language is both meaning-bearing and temporally operative.
-
-| Entity / Concept | Term | Description |
-| --- | --- | --- |
-| **Internal Engine** | `$SPEECH_SCORE_ENGINE` | Canonical compositional engine for authoring, analyzing, rehearsing, rendering, and performing speech works. |
-| **Primary Unit** | `$PHRASE_EVENT` | Bounded utterance/fragment with semantic content, speaker assignment, temporal position, duration, and relational status. |
-| **Voice Carrier** | `$VOICE_CHANNEL` | Speaking carrier independent from character identity (a character or chorus maps to channels). |
-| **Organizing Logic** | `$TEMPORAL_RELATION` | Primary organizing principle (cue order, overlap, delay, recurrence, silence, entry logic). |
-| **Temporal Kernel** | `$TIMING_SUBSTRATE` | Handles clock time, beat time, relative cue time, and elastic time. |
-| **Score Output** | `$NOTATION_RENDERER` | Service producing readable script view, rhythmic score, spatial matrix, and performer parts. |
-| **Rehearsal Bridge** | `$REHEARSAL_KERNEL` | Translates composition objects into cue sheets, click guides, count-ins, and stems. |
-| **Live Layer** | `$LIVE_EXECUTION_LAYER` | Real-time coordination during performance (conductor view, countdowns, tempo maps). |
-| **Diagnostics** | `$ANALYSIS_ENGINE` | Dramaturgical diagnostic engine for pacing, speaker differentiation, rhythm, and interruption logic. |
-
-*Note: Never classify the system as a commodity "TTS tool", "script reader", "voice generator", or "audio toy".*
-
----
-
-## Key Specification & Context Links
-
-- **Layer 1 Feature Spec:** `specs/layer-1-dialogue-loop-tracker/spec.md`
-- **Data Model:** `specs/layer-1-dialogue-loop-tracker/data-model.md`
-- **API Contracts:** `specs/layer-1-dialogue-loop-tracker/contracts/api.md`
-- **Implementation Plan:** `specs/layer-1-dialogue-loop-tracker/plan.md`
-- **Tasks & Roadmap:** `specs/layer-1-dialogue-loop-tracker/tasks.md`
-- **Terminology Charter & Gap Analysis:** `ChatGPT-Gap Analysis and Merging.md`
-- **Proof of Concept & Prototype Design:** `ChatGPT-Prototype & Proof of Concept.md`
