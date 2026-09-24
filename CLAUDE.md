@@ -103,9 +103,9 @@ Library: `meta-organvm/praxis-perpetua/library/`
 | system | any | research-standards-bibliography | APPENDIX: Research Standards Bibliography |
 | system | any | phase-closing-and-forward-plan | METADOC: Phase-Closing Commemoration & Forward Attack Plan |
 | system | any | research-standards | METADOC: Architectural Typology & Research Standards |
-| system | any | sop-ecosystem | SOP: SOP Ecosystem — Taxonomy, Inventory & Coverage |
+| system | any | sop-ecosystem | METADOC: SOP Ecosystem — Taxonomy, Inventory & Coverage |
 | system | foundation | agent-seeding-and-workforce-planning | agent-seeding-and-workforce-planning |
-| system | foundation | architecture-decision-records | SOP: Architectural Decision Records |
+| system | foundation | architecture-decision-records | architecture-decision-records |
 | system | any | autonomous-content-syndication | SOP: Autonomous Content Syndication (The Broadcast Protocol) |
 | system | any | autopoietic-systems-diagnostics | SOP: Autopoietic Systems Diagnostics (The Mirror of Eternity) |
 | system | any | background-task-resilience | background-task-resilience |
@@ -153,8 +153,8 @@ Library: `meta-organvm/praxis-perpetua/library/`
 | system | any | typological-hermeneutic-analysis | SOP: Typological & Hermeneutic Analysis (The Archaeology) |
 | unknown | any | SOP-SS-ATM-001_001-atomic-decomposition | SOP-SS-ATM-001_001: Atomic Decomposition & Coverage Proof |
 | unknown | any | SOP-SS-CLT-001_001-ontology_client_decisions | SOP-SS-CLT-001_001-ontology_client_decisions |
-| unknown | any | SOP-SS-CNT-001_001-content-extraction-and-node-injection | SOP-SS-CNT-001_001-content-extraction-and-node-injection |
-| unknown | any | SOP-SS-ISS-001-001-ontology-issue-specification | SOP-SS-ISS-001-001-ontology_issue_specification |
+| unknown | any | SOP-SS-CNT-001_001-content-extraction-and-node-injection | SOP-SS-CNT-001_001: Content Extraction & Node Injection |
+| unknown | any | SOP-SS-ISS-001-001-ontology-issue-specification | SOP-SS-ISS-001-001-ontology-issue-specification |
 | unknown | any | SOP-SS-PRC-001_001-ontology_meta_process | SOP-SS-PRC-001-001-ontology-meta-process |
 | unknown | any | SOP-SS-QAB-001_001-project-board-qa | SOP-SS-QAB-001_001-project-board-qa |
 | unknown | any | SOP-SS-TRK-001_001-ontology_issue_tracking | SOP-SS-TRK-001_001-ontology_issue_tracking |
