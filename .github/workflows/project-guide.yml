@@ -1,0 +1,63 @@
+name: Project guide
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  project-guide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate guide without installing or starting the application
+        run: |
+          set -euo pipefail
+          git log -1 --format='checkout=%H tree=%T'
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+
+          text = Path('CLAUDE.md').read_text()
+          start, end = '<!-- ORGANVM:AUTO:START -->', '<!-- ORGANVM:AUTO:END -->'
+          if text.count(start) != 1 or text.count(end) != 1 or text.index(start) >= text.index(end):
+              raise SystemExit('Expected one ordered generated-block boundary')
+          guide = text.split(start, 1)[0]
+          if not guide.startswith('# Sign Signal — project guide\n') or guide.count('```') != 2:
+              raise SystemExit('Missing preface or unbalanced guide code fence')
+          for line in guide.splitlines():
+              if line != line.rstrip():
+                  raise SystemExit('Guide contains trailing whitespace')
+          web = json.loads(Path('apps/web/package.json').read_text())
+          if f"Next.js {web['dependencies']['next']}" not in guide:
+              raise SystemExit('Guide Next.js version does not match manifest')
+          root = json.loads(Path('package.json').read_text())
+          for name in ('dev', 'dev:web', 'dev:api', 'dev:voice-bridge', 'build', 'test'):
+              if name not in root['scripts'] or f'npm run {name}' not in guide:
+                  raise SystemExit(f'Declared command missing: {name}')
+          if '--if-present' not in root['scripts']['test'] or '--if-present' not in guide:
+              raise SystemExit('Workspace-test semantics need revalidation')
+          for relative in ('spec.md', 'data-model.md', 'contracts/api.md', 'plan.md', 'tasks.md'):
+              path = Path('specs/layer-1-dialogue-loop-tracker', relative)
+              if not path.is_file() or str(path) not in guide:
+                  raise SystemExit(f'Specification reference missing: {path}')
+          for name in ('ChatGPT-Gap Analysis and Merging.md', 'ChatGPT-Prototype & Proof of Concept.md'):
+              if not Path(name).is_file() or name not in guide:
+                  raise SystemExit('Design provenance reference missing')
+          for name in ('apps/web', 'apps/api', 'apps/voice-bridge', 'packages/db', 'packages/shared'):
+              if not Path(name).is_dir() or name not in guide:
+                  raise SystemExit('Workspace navigation reference missing')
+          subprocess.run(['git', 'diff', '--check', 'HEAD^', 'HEAD'], check=True)
+          print('PASS: guide boundaries, whitespace, version, six commands, seven source references and five workspace paths')
+          PY
+          git diff --exit-code

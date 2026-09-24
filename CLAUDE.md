@@ -1,3 +1,48 @@
+# Sign Signal — project guide
+
+## Purpose and implemented boundary
+
+The intended product is a **Speech-Score Composition System** (`$SPEECH_SCORE_ENGINE`): language treated as both semantic content and timed performance. The Layer 1 specifications describe a dialogue-looping tracker, phrase events, voice assignments, and sequenced playback. A specification or a declared script is not evidence that the complete product is implemented or deployed.
+
+Current source is a monorepo with npm workspaces (`apps/*`, `packages/*`). `apps/web/package.json` declares **Next.js 16.3.1**, React 19, TypeScript, and Tailwind. `apps/api/src/main.py` is a FastAPI scaffold exposing `/` and `/health`; those endpoints do not establish implemented scene, phrase, or sequence APIs. `apps/voice-bridge/` contains a Node WebSocket/audio bridge and a test file. `packages/db/` contains the Prisma database package. Redis and the proposed ElevenLabs, Coqui TTS, and VALL-E integrations must be verified against implementation and configuration before being described as operational.
+
+## Commands and verification
+
+Run declared root scripts from the repository root:
+
+```bash
+npm run dev               # Declared concurrent web/API/voice-bridge development entry
+npm run dev:web
+npm run dev:api
+npm run dev:voice-bridge
+npm run build             # Declared web then API workspace build
+npm run test              # npm run test --workspaces --if-present
+```
+
+The root test script permits workspaces without a test command. Its exit code alone does not prove that every workspace was tested. Inspect each workspace manifest and report the actual test runner, executed cases, failures, and skips. The voice-bridge package declares `node --test`; use `npm run test -w @sign-signal/voice-bridge` for its declared suite. Do not equate command availability with a successful build, device test, or live integration.
+
+The voice-bridge development script uses `node --env-file=.env bridge.js`. Check its environment requirements before starting it; development commands can access audio devices or external services and are not documentation-validation commands. Do not expose real secrets or commit environment files.
+
+`packages/db/package.json` declares `generate`, `migrate`, and `push` under `@sign-signal/db`. Inspect the Prisma schema and target before use. Migration and schema-push commands mutate a database and require an explicitly approved target; they are not smoke tests.
+
+## Navigation and canonical language
+
+Start with the root `package.json`, then the manifest and source in the workspace being changed. Keep web changes in `apps/web`, API changes in `apps/api`, bridge changes in `apps/voice-bridge`, database changes in `packages/db`, and shared contracts in `packages/shared`. Read the Layer 1 contract before changing a cross-workspace interface. Read `.conductor/active-handoff.md` first when present; preserve active path ownership.
+
+Preserve the design vocabulary from `ChatGPT-Gap Analysis and Merging.md`: `$PHRASE_EVENT` is the bounded utterance/performance unit; `$VOICE_CHANNEL` identifies its speaking carrier; `$TEMPORAL_RELATION` describes timing relationships. `$TIMING_SUBSTRATE`, `$NOTATION_RENDERER`, `$REHEARSAL_KERNEL`, `$LIVE_EXECUTION_LAYER`, and `$ANALYSIS_ENGINE` name intended architectural roles, not a claim that all corresponding services exist. Do not reduce the product's category to a generic TTS tool or silently rename canonical entities. Consult the charter for naming conventions before introducing identifiers.
+
+## Source specifications
+
+- `specs/layer-1-dialogue-loop-tracker/spec.md`: intended Layer 1 behavior.
+- `specs/layer-1-dialogue-loop-tracker/data-model.md`: proposed data model.
+- `specs/layer-1-dialogue-loop-tracker/contracts/api.md`: API contract.
+- `specs/layer-1-dialogue-loop-tracker/plan.md`: implementation plan.
+- `specs/layer-1-dialogue-loop-tracker/tasks.md`: implementation task inventory; verify current completion in source.
+- `ChatGPT-Gap Analysis and Merging.md`: terminology charter and design decisions.
+- `ChatGPT-Prototype & Proof of Concept.md`: prototype design provenance.
+
+The generated system block below is preserved as historical generated context. Its April 2026 metrics and model guidance are not a fresh measurement of this repository or proof of present capabilities. Update it only through its owning generation process, not by editing it during a project-guide repair.
+
 <!-- ORGANVM:AUTO:START -->
 ## System Context (auto-generated — do not edit)
 
